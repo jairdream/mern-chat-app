@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const fileRoutes = require("./routes/fileRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const path = require("path");
 
@@ -20,6 +21,7 @@ app.use(express.json()); // to accept json data
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
+app.use("/api/file", fileRoutes);
 
 // --------------------------deployment------------------------------
 
@@ -32,6 +34,7 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.resolve(__dirname1, "frontend", "build", "index.html"))
   );
 } else {
+  app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
   app.get("/", (req, res) => {
     res.send("API is running..");
   });
