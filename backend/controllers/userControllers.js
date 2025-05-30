@@ -25,11 +25,6 @@ const allUsers = asyncHandler(async (req, res) => {
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, pic } = req.body;
 
-  console.log(name);
-  console.log(email);
-  console.log(password);
-  console.log(pic);
-
   if (!name || !email || !password) {
     res.status(400);
     throw new Error("Please Enter all the Feilds");
@@ -50,8 +45,6 @@ const registerUser = asyncHandler(async (req, res) => {
     password,
     pic,
   });
-
-  console.log(user);
 
   if (user) {
     res.status(201).json({
