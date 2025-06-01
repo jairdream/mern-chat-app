@@ -51,7 +51,7 @@ const Signup = () => {
         },
       };
       const { data } = await axios.post(
-        "/api/user",
+        "/api/v1/user",
         {
           name,
           email,
@@ -117,7 +117,7 @@ const Signup = () => {
       //   });
       const data = new FormData();
       data.append("file", pics);
-      axios.post("api/file/upload", data)
+      axios.post("api/v1/file/upload", data)
         .then((res) => res.data)
         .then((data) => {
           setPic(data.url.toString());

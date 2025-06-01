@@ -5,6 +5,7 @@ const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const fileRoutes = require("./routes/fileRoutes");
+const authRoutes = require("./routes/authRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const path = require("path");
 
@@ -18,10 +19,12 @@ app.use(express.json()); // to accept json data
 //   res.send("API Running!");
 // });
 
-app.use("/api/user", userRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/message", messageRoutes);
+app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/chat", chatRoutes);
+app.use("/api/v1/message", messageRoutes);
+app.use("/api/v1/file", fileRoutes);
 app.use("/api/file", fileRoutes);
+app.use("/api/auth", authRoutes);
 
 // --------------------------deployment------------------------------
 
