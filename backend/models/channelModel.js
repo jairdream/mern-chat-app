@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const channelModel = mongoose.Schema(
   {
     name: { type: String, trim: true },
+    isProductChannel: { type: Boolean, default: false },
     users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     latestMessage: {
       type: mongoose.Schema.Types.ObjectId,
@@ -12,6 +13,6 @@ const channelModel = mongoose.Schema(
   { timestamps: true }
 );
 
-const Channel = mongoose.model("Chat", channelModel);
+const Channel = mongoose.model("Channel", channelModel);
 
 module.exports = Channel;

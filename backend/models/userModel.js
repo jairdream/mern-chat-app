@@ -17,6 +17,7 @@ const userSchema = mongoose.Schema(
       required: true,
       default: false,
     },
+    refreshToken: { type: "String", require: true },
   },
   { timestaps: true }
 );
@@ -26,7 +27,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified) {
+  if (!this.isModified("password")) {
     next();
   }
 

@@ -10,6 +10,7 @@ const allMessages = asyncHandler(async (req, res) => {
   try {
     const messages = await Message.find({ channel: req.params.channelId })
       .populate("sender", "name pic email")
+      .populate("files", "name path size type")
       .populate("channel");
     res.json(messages);
   } catch (error) {
@@ -34,11 +35,12 @@ const readMessages = asyncHandler(async (req, res) => {
     const updateResult = await Message.updateMany(
       {
         _id: { $in: ids },
-        sender: { $ne: currentUserId } // Exclude self-sent messages
+        isViewed: false,
+        sender: { $ne: req.user._id } // Exclude self-sent messages
       },
       {
         $set: { 
-          isReaded: true,
+          isViewed: true,
           readAt: new Date()
         },
         $setOnInsert: {
@@ -54,13 +56,14 @@ const readMessages = asyncHandler(async (req, res) => {
     // Find skipped messages (self-sent)
     const selfSentCount = await Message.countDocuments({
       _id: { $in: ids },
-      sender: currentUserId
+      sender: req.user._id,
+      isViewed: false
     });
 
     res.status(200).json({
       success: true,
-      message: `Marked ${updateResult.modifiedCount} messages as readed`,
-      modifiedCount: updateResult.modifiedCount,
+      message: `Marked ${updateResult.modifiedCount || 0} messages as readed`,
+      modifiedCount: updateResult.modifiedCount || 0,
       selfExcludedCount: selfSentCount
     });
   } catch (error) {
@@ -75,15 +78,17 @@ const readMessages = asyncHandler(async (req, res) => {
 const sendMessage = asyncHandler(async (req, res) => {
   const { content, files, channelId } = req.body;
 
-  if (!content || !files || !channelId) {
+  if (!content || !channelId) {
     console.log("Invalid data passed into request");
     return res.sendStatus(400);
   }
 
+  const filesArray = (!files || !Array.isArray(files)) ? [] : files;
+
   var newMessage = {
     sender: req.user._id,
     content: content,
-    files: files,
+    files: filesArray,
     channel: channelId,
     sendAt: Date.now(),
   };
@@ -92,6 +97,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     var message = await Message.create(newMessage);
 
     message = await message.populate("sender", "name pic").execPopulate();
+    message = await message.populate("files", "name path size type").execPopulate();
     message = await message.populate("channel").execPopulate();
     message = await User.populate(message, {
       path: "channel.users",

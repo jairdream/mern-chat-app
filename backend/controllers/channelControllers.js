@@ -7,7 +7,7 @@ const User = require("../models/userModel");
 //@access          Protected
 const accessChannel = asyncHandler(async (req, res) => {
   const { userId } = req.body;
-
+  
   if (!userId) {
     console.log("UserId param not sent with request");
     return res.sendStatus(400);
@@ -32,7 +32,7 @@ const accessChannel = asyncHandler(async (req, res) => {
     res.send(isChannel[0]);
   } else {
     var channelData = {
-      channelName: "message channel",
+      name: "message channel",
       isProductChannel: false,
       users: [req.user._id, userId],
     };

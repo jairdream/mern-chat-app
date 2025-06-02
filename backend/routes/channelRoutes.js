@@ -1,7 +1,7 @@
 const express = require("express");
 const {
-  accessChat,
-  fetchChats,
+  accessChannel,
+  fetchChannels,
 } = require("../controllers/channelControllers");
 const { protect } = require("../middleware/authMiddleware");
 

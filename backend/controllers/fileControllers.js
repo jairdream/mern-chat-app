@@ -16,27 +16,27 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage }).single('file');
 
 const uploadFile = async (req, res) => {
-    console.log(req.file);
-    if (!req.file) {
-        return res.status(400).send('No file uploaded.');
-    }
-    const { filename, path, size, mimetype } = req.file;
+  console.log(req.file);
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  const { filename, path, size, mimetype } = req.file;
 
-    const newFile = new File({
-        filename: filename,
-        path: path,
-        size: size,
-        type: mimetype,
+  const newFile = new File({
+    name: filename,
+    path: path,
+    size: size,
+    type: mimetype,
+  });
+
+  newFile.save()
+    .then(() => {
+      res.json({ url: path });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send('Error saving file metadata');
     });
-
-    newFile.save()
-        .then(() => {
-            res.json({ url: path });
-        })
-        .catch((err) => {
-            console.log(err);
-            res.status(500).send('Error saving file metadata');
-        });
 }
 
 module.exports = { upload, uploadFile };
