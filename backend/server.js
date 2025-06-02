@@ -4,8 +4,10 @@ const dotenv = require("dotenv");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const channelRoutes = require("./routes/channelRoutes");
 const fileRoutes = require("./routes/fileRoutes");
 const authRoutes = require("./routes/authRoutes");
+const productRoutes = require("./routes/productRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const path = require("path");
 
@@ -23,8 +25,11 @@ app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/message", messageRoutes);
 app.use("/api/v1/file", fileRoutes);
+app.use("/api/channel", channelRoutes);
+app.use("/api/message", messageRoutes);
 app.use("/api/file", fileRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/product", productRoutes);
 
 // --------------------------deployment------------------------------
 
