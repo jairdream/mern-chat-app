@@ -1,18 +1,27 @@
 const express = require("express");
+const cors = require("cors");
 const connectDB = require("./config/db");
 const dotenv = require("dotenv");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const channelRoutes = require("./routes/channelRoutes");
 const fileRoutes = require("./routes/fileRoutes");
 const authRoutes = require("./routes/authRoutes");
+const productRoutes = require("./routes/productRoutes");
+const historyRoutes = require("./routes/historyRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const path = require("path");
 
 dotenv.config();
 connectDB();
 const app = express();
-
+// Open CORS configuration
+app.use(cors({
+  origin: "*",     // Allow any domain
+  methods: "*",    // Allow all HTTP methods
+  credentials: true
+}));
 app.use(express.json()); // to accept json data
 
 // app.get("/", (req, res) => {
@@ -23,8 +32,12 @@ app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/message", messageRoutes);
 app.use("/api/v1/file", fileRoutes);
+app.use("/api/channel", channelRoutes);
+app.use("/api/message", messageRoutes);
 app.use("/api/file", fileRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/product", productRoutes);
+app.use("/api/history", historyRoutes);
 
 // --------------------------deployment------------------------------
 

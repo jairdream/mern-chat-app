@@ -2,7 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Product = require("../models/productModel");
 
 // @desc    Create new product
-// @route   POST /api/products
+// @route   POST /api/product
 // @access  Public
 const createProduct = async (req, res) => {
   const { name, content, files } = req.body;
@@ -11,6 +11,10 @@ const createProduct = async (req, res) => {
   if (!name || !content) {
     console.log("Invalid data passed into request");
     return res.status(400).json({ error: 'Name and content are required fields' });
+  }
+
+  if (!files || !Array.isArray(files)) {
+    files = [];
   }
 
   try {
@@ -23,11 +27,11 @@ const createProduct = async (req, res) => {
 };
 
 // @desc    Get all products
-// @route   GET /api/products
+// @route   GET /api/product
 // @access  Public
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find().populate('files');
+    const products = await Product.find().populate('files', "name path size type");
     res.json(products);
   } catch (error) {
     res.status(500).json({ error: 'Server error: ' + error.message });
@@ -35,16 +39,11 @@ const getProducts = async (req, res) => {
 };
 
 // @desc    Get single product by ID
-// @route   GET /api/products/:id
+// @route   GET /api/product/:id
 // @access  Public
 const getProductById = async (req, res) => {
-  // Validate MongoDB ID format
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: 'Invalid product ID format' });
-  }
-
   try {
-    const product = await Product.findById(req.params.id).populate('files');
+    const product = await Product.findById(req.params.id).populate('files', "name path size type");
     
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
@@ -57,27 +56,24 @@ const getProductById = async (req, res) => {
 };
 
 // @desc    Update product
-// @route   PUT /api/products/:id
+// @route   PUT /api/product/:id
 // @access  Public
-const updateProduct = async (req, res) => {
-  // Validate MongoDB ID format
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: 'Invalid product ID format' });
-  }
-
+const updateProduct = asyncHandler( async (req, res) => {
   const { name, content, files } = req.body;
 
-  // Validation
   if (!name || !content) {
+    console.log("Name and content are required fields");
     return res.status(400).json({ error: 'Name and content are required fields' });
   }
+
+  const filesArray = (!files || !Array.isArray(files)) ? [] : files;
 
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      { name, content, files },
+      { name, content, files: filesArray },
       { new: true, runValidators: true }
-    ).populate('files');
+    ).populate('files', "name path size type");
     
     if (!updatedProduct) {
       return res.status(404).json({ error: 'Product not found' });
@@ -87,17 +83,12 @@ const updateProduct = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Server error: ' + error.message });
   }
-};
+});
 
 // @desc    Delete product
-// @route   DELETE /api/products/:id
+// @route   DELETE /api/product/:id
 // @access  Public
 const deleteProduct = async (req, res) => {
-  // Validate MongoDB ID format
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: 'Invalid product ID format' });
-  }
-
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
     
