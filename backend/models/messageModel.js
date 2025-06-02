@@ -3,9 +3,12 @@ const mongoose = require("mongoose");
 const messageSchema = mongoose.Schema(
   {
     sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    receiver: { type: mongoose.Schema.Types.ObjectId, ref: "Receiver" },
     content: { type: String, trim: true },
-    chat: { type: mongoose.Schema.Types.ObjectId, ref: "Chat" },
-    readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    files: [{ type: mongoose.Schema.Types.ObjectId, ref: "File" }],
+    sendAt: { type: Date, default: Date.now },
+    receiveAt: { type: Date },
+    readAt: { type: Date },
   },
   { timestamps: true }
 );
