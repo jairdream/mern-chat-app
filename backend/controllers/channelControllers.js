@@ -73,7 +73,35 @@ const fetchChannels = asyncHandler(async (req, res) => {
   }
 });
 
+//@description     Toggle pin status of channel
+//@route           POST /api/channel/togglepin/{channelId}
+//@access          Protected
+const togglePin = asyncHandler(async (req, res) => {
+  try {
+    // Find the channel by ID
+    const channel = await Channel.findById(req.params.channelId);
+
+    // If the channel doesn't exist, return a 404 error
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found' });
+    }
+
+    // Toggle the isPinned status
+    channel.isPinned = !channel.isPinned;
+
+    // Save the updated channel
+    await channel.save();
+
+    // Return the updated channel
+    res.json(channel);
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+});
+
 module.exports = {
   accessChannel,
   fetchChannels,
+  togglePin
 }

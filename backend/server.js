@@ -66,41 +66,63 @@ const PORT = process.env.PORT;
 
 const server = app.listen(
   PORT,
+  '0.0.0.0',
   console.log(`Server running on PORT ${PORT}...`.yellow.bold)
 );
 
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
-    origin: "http://localhost:3000",
+    origin: '*',
     // credentials: true,
   },
 });
 
 io.on("connection", (socket) => {
-  console.log("Connected to socket.io");
+  console.log("Connected to socket.io from: ", socket.conn.remoteAddress);
   socket.on("setup", (userData) => {
+    const rooms = Object.keys(socket.rooms);
+    if (!rooms.includes(userData._id)) {
+      socket.join(userData._id);
+      console.log("User setup with id: ", userData._id);
+    } else {
+      console.log("User Already setup with id: ", userData._id);
+    }
     socket.join(userData._id);
     socket.emit("connected");
   });
 
-  socket.on("join chat", (room) => {
-    socket.join(room);
-    console.log("User Joined Room: " + room);
+  socket.on("join channel", (room) => {
+    const rooms = Object.keys(socket.rooms);
+    if (!rooms.includes(room)) {
+      socket.join(room);
+      console.log("User Joined Room: " + room);
+    } else {
+      console.log("User already in Room: " + room);
+    }
   });
-  socket.on("typing", (room) => socket.in(room).emit("typing"));
+  socket.on("typing", (room) => {
+    console.log("typing");
+    console.log(room);
+    socket.in(room).emit("typing")});
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
 
   socket.on("new message", (newMessageRecieved) => {
-    var chat = newMessageRecieved.chat;
+    console.log("new message");
+    var channel = newMessageRecieved.channel;
+    console.log(channel);
+    if (!channel.users) return console.log("channel.users not defined");
 
-    if (!chat.users) return console.log("chat.users not defined");
-
-    chat.users.forEach((user) => {
+    channel.users.forEach((user) => {
       if (user._id == newMessageRecieved.sender._id) return;
-
+      console.log(user._id)
       socket.in(user._id).emit("message recieved", newMessageRecieved);
     });
+  });
+
+  socket.on("read message", (messageRead) => {
+    console.log("read message");
+    socket.in(messageRead.reciever._id).emit("message viewed", messageRead);
   });
 
   socket.off("setup", () => {

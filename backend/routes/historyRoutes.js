@@ -3,11 +3,11 @@ const {
   addHistory,
   allHistories,
 } = require("../controllers/historyController");
-const { protect } = require("../middleware/authMiddleware");
+const { protectUser } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.route("/:userId").get(protect, allHistories);
-router.route("/").post(protect, addHistory);
+router.route("/:userId").get(protectUser, allHistories);
+router.route("/").post(protectUser, addHistory);
 
 module.exports = router;

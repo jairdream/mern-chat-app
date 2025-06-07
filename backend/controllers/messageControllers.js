@@ -19,6 +19,23 @@ const allMessages = asyncHandler(async (req, res) => {
   }
 });
 
+//@description     Get unread message counts
+//@route           GET /api/message/unread/{channelId}
+//@access          Protected
+const unreadMessagesCount = asyncHandler(async (req, res) => {
+  try {
+    const count = await Message.count({ 
+      channel: req.params.channelId, 
+      isViewed: false, 
+      sender: { $ne: req.user._id }
+    });
+    res.json(count);
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+});
+
 //@description     Read Messages
 //@route           POST /api/Message/read
 //@access          Protected
@@ -62,8 +79,8 @@ const readMessages = asyncHandler(async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Marked ${updateResult.modifiedCount || 0} messages as readed`,
-      modifiedCount: updateResult.modifiedCount || 0,
+      message: `Marked ${updateResult.nModified || 0} messages as readed`,
+      modifiedCount: updateResult.nModified || 0,
       selfExcludedCount: selfSentCount
     });
   } catch (error) {
@@ -113,4 +130,43 @@ const sendMessage = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { allMessages, sendMessage, readMessages };
+//@description     Create New Message
+//@route           PUT /api/Message/{messageId}
+//@access          Protected
+const updateMessage = asyncHandler(async (req, res) => {
+  const { content, files } = req.body;
+
+  if (!content) {
+    console.log("Content is required to update the message");
+    return res.sendStatus(400);
+  }
+
+  try {
+    const message = await Message.findById(req.params.messageId);
+    if (!message) {
+      return res.json({ message: 'Message not found' });
+    }
+
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You are not authorized to update this message' });
+    }
+
+    message.content = content;
+    if (files && Array.isArray(files)) {
+      message.files = files;
+    }
+
+    const updatedMessage = await message.save();
+    const populatedMessage = await updatedMessage
+      .populate("sender", "name pic")
+      .populate("files", "name path size type")
+      .populate("channel")
+      .execPopulate();
+    
+    res.json(populatedMessage);
+  } catch(error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+module.exports = { allMessages, sendMessage, updateMessage, readMessages, unreadMessagesCount };
