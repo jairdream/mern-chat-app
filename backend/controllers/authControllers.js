@@ -1,13 +1,24 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
+const nodemailer = require('nodemailer');
 const { generateAccessToken, generateRefreshToken } = require("../config/generateTokens");
+const { generateOTP } = require("../utils/otpGenerator");
+const { sendGmail } = require("../utils/emailService");
+
+//@description     Get all users
+//@route           GET /api/auth/admin
+//@access          Public
+const adminUser = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ isVerified:true, isAdmin: true });
+  res.send(user._id);
+});
 
 //@description     Get all users
 //@route           GET /api/auth/all
 //@access          Private
 const allUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({ _id: { $ne: req.user._id } });
+  const users = await User.find({ isVerified:true, _id: { $ne: req.user._id } });
   res.send(users);
 });
 
@@ -23,7 +34,7 @@ const searchUsers = asyncHandler(async (req, res) => {
       }
     : {};
 
-  const users = await User.find(keyword).find({ _id: { $ne: req.user._id } });
+  const users = await User.find(keyword).find({ isVerified:true, _id: { $ne: req.user._id } });
   res.send(users);
 });
 
@@ -86,12 +97,16 @@ const registerUser = asyncHandler(async (req, res) => {
   if (user) {
     const refreshToken = generateRefreshToken(user._id);
     user.refreshToken = refreshToken;
+    user.otp = generateOTP();
     await user.save();
+
+    sendGmail(user.email, user.otp);
 
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
+      otp: user.otp,
       isAdmin: user.isAdmin,
       pic: user.pic,
       token: generateAccessToken(user._id),
@@ -111,7 +126,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email });
   
-  if (user && (await user.matchPassword(password))) {
+  if (user && (await user.matchPassword(password)) && user.isVerified) {
     user.refreshToken = generateRefreshToken(user._id);
     await user.save();
 
@@ -204,4 +219,19 @@ const refreshSign = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { allUsers, searchUsers, getUserById, registerUser, loginUser, updateUser, refreshSign };
+//@description     Verify user
+//@route           POST /api/auth/verify
+//@access          Public
+const verifyUser = asyncHandler(async (req, res) => {
+  const { code } = req.body;
+  const user = await User.findById(req.user._id);
+  if (user.otp === code) {
+    user.isVerified = true
+    user.save()
+    res.json(user)
+  } else {
+    res.status(403).json({ message: "Code is invalid"});
+  }
+});
+
+module.exports = { adminUser, allUsers, searchUsers, getUserById, registerUser, loginUser, verifyUser, updateUser, refreshSign };
