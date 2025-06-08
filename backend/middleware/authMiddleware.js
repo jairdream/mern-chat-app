@@ -19,7 +19,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
       next();
     } catch (error) {
-      if (err.name === 'TokenExpiredError') {
+      if (error.name === 'TokenExpiredError') {
         res.status(401);
         throw new Error("Token expired");
       }
@@ -56,7 +56,7 @@ const protectUser = asyncHandler(async (req, res, next) => {
 
       next();
     } catch (error) {
-      if (err.name === 'TokenExpiredError') {
+      if (error.name === 'TokenExpiredError') {
         res.status(401);
         throw new Error("Token expired");
       }
@@ -98,7 +98,7 @@ const protectAdmin = asyncHandler(async (req, res, next) => {
 
       next();
     } catch (error) {
-      if (err.name === 'TokenExpiredError') {
+      if (error.name === 'TokenExpiredError') {
         res.status(401);
         throw new Error("Token expired");
       }

@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
+const Channel = require("../models/channelModel");
 const jwt = require("jsonwebtoken");
 const nodemailer = require('nodemailer');
 const { generateAccessToken, generateRefreshToken } = require("../config/generateTokens");
@@ -118,6 +119,27 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
+//@description     Verify user
+//@route           POST /api/auth/verify
+//@access          Public
+const verifyUser = asyncHandler(async (req, res) => {
+  const { code } = req.body;
+  const user = await User.findById(req.user._id);
+  if (user.otp === code) {
+    user.isVerified = true
+    await user.save();
+    console.log("New User Verified");
+    const result = await Channel.updateOne(
+      { _id: productChannel._id },
+      { $addToSet: { users: user._id } } // Atomic update
+    );
+    console.log("New User Added to product channel");
+    res.json(user)
+  } else {
+    res.status(403).json({ message: "Code is invalid"});
+  }
+});
+
 //@description     Auth the user
 //@route           POST /api/auth/login
 //@access          Public
@@ -129,6 +151,21 @@ const loginUser = asyncHandler(async (req, res) => {
   if (user && (await user.matchPassword(password)) && user.isVerified) {
     user.refreshToken = generateRefreshToken(user._id);
     await user.save();
+
+    const productChannel = await Channel.findOne({ isProductChannel: true });
+    if (!productChannel) {
+      const allUsers = await User.find({ isVerified: true });
+      const userIds = allUsers.map(user => user._id);
+      await Channel.create({
+        isProductChannel: true,
+        name: "product channel",
+        users: userIds,
+        isPinned: true
+      });
+      console.log("Product Channel created");
+    } else {
+      console.log("Product channel is already created.");
+    }
 
     res.json({
       _id: user._id,
@@ -216,21 +253,6 @@ const refreshSign = asyncHandler(async (req, res) => {
   } catch (error) {
     res.status(400);
     throw new Error(error.message);
-  }
-});
-
-//@description     Verify user
-//@route           POST /api/auth/verify
-//@access          Public
-const verifyUser = asyncHandler(async (req, res) => {
-  const { code } = req.body;
-  const user = await User.findById(req.user._id);
-  if (user.otp === code) {
-    user.isVerified = true
-    user.save()
-    res.json(user)
-  } else {
-    res.status(403).json({ message: "Code is invalid"});
   }
 });
 

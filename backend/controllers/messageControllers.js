@@ -95,12 +95,18 @@ const readMessages = asyncHandler(async (req, res) => {
 const sendMessage = asyncHandler(async (req, res) => {
   const { content, files, channelId } = req.body;
 
-  if (!content || !channelId) {
+  if ((!content&& (!files||files?.length == 0)) || !channelId) {
     console.log("Invalid data passed into request");
     return res.sendStatus(400);
   }
 
   const filesArray = (!files || !Array.isArray(files)) ? [] : files;
+
+  const channel = await Channel.findById(channelId);
+  if (channel.isProductChannel && !req.user.isAdmin) {
+    res.status(403);
+    throw new Error("You are not admin. You can not write message here");
+  }
 
   var newMessage = {
     sender: req.user._id,
@@ -169,4 +175,29 @@ const updateMessage = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { allMessages, sendMessage, updateMessage, readMessages, unreadMessagesCount };
+//@description     Create New Message
+//@route           POST /api/Message/search/?content=
+//@access          Protected
+const searchMessage = asyncHandler(async (req, res) => {
+  const channels = await Channel.find({ users: { $elemMatch: { $eq: req.user._id } } });
+  const channelIds = channels.map(channel => channel._id);
+  const keyword = req.query.content
+    ? {
+        $and: [
+          { content: { $regex: req.query.content, $options: "i" } },
+        ],
+      }
+    : {};
+  const messages = await Message.find({...keyword, channel: { $in : channelIds }})
+    .populate({
+      path: 'channel',
+      select: 'name users latestMessage isPinned ',
+      populate: [
+        { path: 'users', select: '-password' },
+      ]
+    })
+    .populate("sender", "name pic")
+  res.send(messages);
+});
+
+module.exports = { allMessages, sendMessage, updateMessage, readMessages, unreadMessagesCount, searchMessage };

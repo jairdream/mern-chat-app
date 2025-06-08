@@ -49,6 +49,7 @@ const downloadFile = async (req, res) => {
   const file = await File.findById(fileId);
   const directoryPath = path.join(__dirname, '../uploads');
   console.log(directoryPath);
+  console.log(file);
   const filePath = path.join(directoryPath, file.name);
 
   // Check if file exists
@@ -58,11 +59,16 @@ const downloadFile = async (req, res) => {
       return;
     }
 
-    // Send the file for download
-    res.download(filePath, file.name, (err) => {
+    // Read the file and send it in the response
+    fs.readFile(filePath, (err, data) => {
       if (err) {
-        res.status(500).send('Could not download the file');
+        res.status(500).send('Could not read the file');
+        return;
       }
+      
+      res.setHeader('Content-Disposition', `attachment; filename=${file.name}`);
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.send(data);
     });
   });
 };
