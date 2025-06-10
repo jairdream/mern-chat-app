@@ -1,0 +1,23 @@
+export const baseURL = "http://46.250.242.15:5001";
+export const urls = {
+  auth_register: "/api/auth/register/",
+  auth_verify: "/api/auth/verify/",
+  auth_login: "/api/auth/login/",
+  auth_get: "/api/auth/one/",
+  auth_resend: "/api/auth/resendcode/",
+  get_admin: "/api/auth/admin/",
+  channel_create: "/api/channel/",
+  channel_get: "/api/channel/",
+  channel_pin: "/api/channel/togglepin/",
+  channel_get_count: "/api/message/unread/",
+  file_download: "/api/file/download/",
+  chat_history_get_on_channel: "/api/message/",
+  chat: "/api/message/",
+  chat_update: "/api/message/",
+  chat_search: "/api/message/search/?content=",
+  chat_read: "/api/message/read/",
+  file_upload: "/api/file/upload/",
+  file_download: "/api/file/download/",
+  PRODUCT_BASE: "/api/product/",
+  PRODUCT_HISTORY: "/api/history/",
+};
