@@ -193,7 +193,7 @@ const searchMessage = asyncHandler(async (req, res) => {
       path: 'channel',
       select: 'name users latestMessage isPinned ',
       populate: [
-        { path: 'users', select: '-password' },
+        { path: 'users', select: 'name pic email' },
       ]
     })
     .populate("sender", "name pic")

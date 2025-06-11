@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const dotenv = require("dotenv");
-const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const channelRoutes = require("./routes/channelRoutes");
@@ -28,7 +27,6 @@ app.use(express.json()); // to accept json data
 //   res.send("API Running!");
 // });
 
-app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/message", messageRoutes);
 app.use("/api/v1/file", fileRoutes);
@@ -81,6 +79,10 @@ const io = require("socket.io")(server, {
 
 io.on("connection", (socket) => {
   console.log("Connected to socket.io from: ", socket.conn.remoteAddress);
+
+  socket.userId = null;
+  socket.userChannels = new Set();
+
   socket.on("setup", (userData) => {
     const rooms = Object.keys(socket.rooms);
     if (!rooms.includes(userData._id)) {
@@ -90,6 +92,14 @@ io.on("connection", (socket) => {
       console.log("User Already setup with id: ", userData._id);
     }
     socket.join(userData._id);
+    socket.userId = userData._id;
+
+    socket.userChannels.forEach(channel => {
+      socket.to(channel).emit("user online", {
+        userId: socket.userId,
+        channel: channel
+      });
+    });
     socket.emit("connected");
   });
 
@@ -97,27 +107,42 @@ io.on("connection", (socket) => {
     const rooms = Object.keys(socket.rooms);
     if (!rooms.includes(room)) {
       socket.join(room);
+      socket.userChannels.add(room); 
       console.log("User Joined Room: " + room);
     } else {
       console.log("User already in Room: " + room);
     }
   });
+
   socket.on("typing", (room) => {
     console.log("typing");
     console.log(room);
-    socket.in(room).emit("typing")});
+    socket.in(room).emit("typing");
+  });
+
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
 
   socket.on("new message", (newMessageRecieved) => {
     console.log("new message");
     var channel = newMessageRecieved.channel;
-    console.log(channel);
+    console.log("in channel: ", channel);
     if (!channel.users) return console.log("channel.users not defined");
 
     channel.users.forEach((user) => {
       if (user._id == newMessageRecieved.sender._id) return;
-      console.log(user._id)
       socket.in(user._id).emit("message recieved", newMessageRecieved);
+    });
+  });
+
+  socket.on("update message", (newMessageUpdated) => {
+    console.log("update message");
+    var channel = newMessageUpdated.channel;
+    console.log("in channel: ", channel);
+    if (!channel.users) return console.log("channel.users not defined");
+
+    channel.users.forEach((user) => {
+      if (user._id == newMessageUpdated.sender._id) return;
+      socket.in(user._id).emit("message updated", newMessageUpdated);
     });
   });
 
@@ -126,8 +151,52 @@ io.on("connection", (socket) => {
     socket.in(messageRead.reciever._id).emit("message viewed", messageRead);
   });
 
+  socket.on("status", (messageRead) => {
+    console.log("status change");
+
+    socket.in(messageRead.reciever._id).emit("message viewed", messageRead);
+  });
+
   socket.off("setup", () => {
     console.log("USER DISCONNECTED");
     socket.leave(userData._id);
+  });
+
+  socket.on("user offline", () => {
+    console.log(`User ${socket.userId} goes offline`);
+
+    // Broadcast to all channels
+    socket.userChannels.forEach(channel => {
+      socket.to(channel).emit("user offline", {
+        userId: socket.userId,
+        channel: channel
+      });
+    });
+  });
+
+  socket.on("user online", () => {
+    console.log(`User ${socket.userId} is online`);
+
+    // Broadcast to all channels
+    socket.userChannels.forEach(channel => {
+      socket.to(channel).emit("user online", {
+        userId: socket.userId,
+        channel: channel
+      });
+    });
+  });
+
+  socket.on("disconnect", () => {
+    if (!socket.userId) return;
+
+    console.log(`User ${socket.userId} disconnected`);
+
+    // Broadcast to all channels
+    socket.userChannels.forEach(channel => {
+      socket.to(channel).emit("user offline", {
+        userId: socket.userId,
+        channel: channel
+      });
+    });
   });
 });

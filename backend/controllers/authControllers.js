@@ -51,6 +51,7 @@ const getUserById = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      isVerified: user.isVerified,
       pic: user.pic,
       token: generateAccessToken(user._id),
       refreshToken: generateRefreshToken(user._id),
@@ -79,14 +80,18 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Password confirm not equals.");
   }
 
-  const userExists = await User.findOne({ email });
+  const nameNormalized = name.toLowerCase();
+  const userExists = await User.findOne({ 
+    $or: [
+      { email: email },
+      { name: nameNormalized}
+    ]
+   });
 
   if (userExists) {
     res.status(400);
     throw new Error("User already exists");
   }
-
-  console.log("userExists", userExists);
 
   const user = await User.create({
     name,
@@ -107,7 +112,34 @@ const registerUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      otp: user.otp,
+      isAdmin: user.isAdmin,
+      pic: user.pic,
+      token: generateAccessToken(user._id),
+      refreshToken: refreshToken,
+    });
+  } else {
+    res.status(400);
+    throw new Error("User not found");
+  }
+});
+
+//@description     Resend code to user
+//@route           POST /api/auth/resendcode
+//@access          Public
+const resendCode = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (user) {
+    const refreshToken = generateRefreshToken(user._id);
+    user.refreshToken = refreshToken;
+    user.otp = generateOTP();
+    await user.save();
+
+    sendGmail(user.email, user.otp);
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
       isAdmin: user.isAdmin,
       pic: user.pic,
       token: generateAccessToken(user._id),
@@ -129,11 +161,20 @@ const verifyUser = asyncHandler(async (req, res) => {
     user.isVerified = true
     await user.save();
     console.log("New User Verified");
-    const result = await Channel.updateOne(
-      { _id: productChannel._id },
-      { $addToSet: { users: user._id } } // Atomic update
-    );
-    console.log("New User Added to product channel");
+    try {
+      const productChannel = await Channel.findOne({ isProductChannel: true });
+      if (productChannel) {
+        const result = await Channel.updateOne(
+          { _id: productChannel._id },
+          { $addToSet: { users: user._id } } // Atomic update
+        );
+        console.log("New User Added to product channel");
+      } else {
+        console.log("There aren't any product channels.")
+      }
+    } catch (error) {
+      console.log(error);
+    }
     res.json(user)
   } else {
     res.status(403).json({ message: "Code is invalid"});
@@ -210,6 +251,7 @@ const updateUser = asyncHandler(async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       isAdmin: updatedUser.isAdmin,
+      isVerified: updatedUser.isVerified,
       pic: updatedUser.pic,
       token: generateAccessToken(updatedUser._id),
       refreshToken: updatedUser.refreshToken,
@@ -256,4 +298,4 @@ const refreshSign = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { adminUser, allUsers, searchUsers, getUserById, registerUser, loginUser, verifyUser, updateUser, refreshSign };
+module.exports = { adminUser, allUsers, searchUsers, getUserById, registerUser, resendCode, loginUser, verifyUser, updateUser, refreshSign };
