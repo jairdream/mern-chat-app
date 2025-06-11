@@ -5,10 +5,6 @@ import messageReducer from "../core/reducers/messageSlice";
 import unreadCountReducer from "../core/reducers/unreadCountSlice";
 import productReducer from "../core/reducers/productSlice";
 
-const loggerMiddleware = (store) => (next) => (action) => {
-  return next(action);
-};
-
 const store = configureStore({
   reducer: {
     unreadCount: unreadCountReducer,
@@ -17,8 +13,6 @@ const store = configureStore({
     messages: messageReducer,
     products: productReducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(loggerMiddleware),
 });
 
 export default store;

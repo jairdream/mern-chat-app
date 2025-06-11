@@ -1,4 +1,4 @@
-export const baseURL = "http://46.250.242.15:5001";
+export const baseURL = "http://100.99.99.25:5000";
 export const urls = {
   auth_register: "/api/auth/register/",
   auth_verify: "/api/auth/verify/",

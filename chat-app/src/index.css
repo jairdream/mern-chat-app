@@ -36,7 +36,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #131313;
   color: white;
-  background-image: url("../public/background.png");
+  background-image: url("../public/background.webp");
   background-size: cover;
 }
 

@@ -92,7 +92,6 @@ export const useChatHandlers = (setShowUsers) => {
       if (channel._id == id) {
         if (channel.isProductChannel) {
           for (let user of channel.users) {
-            console.log(user);
             if (user.isAdmin) {
               const result = await axios.get(`${urls.auth_get}${user._id}`);
               dispatch(SELETE_USER(result.data));

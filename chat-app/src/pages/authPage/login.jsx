@@ -24,9 +24,7 @@ export const Login = () => {
   const handleLogin = async () => {
     try {
       const result = await login(credential);
-      console.log("login-response", result)
       dispatch(SET_AUTH(result));
-      console.log("set-auth", result);
       navigate("/chat");
     } catch (e) {
       setError("Email or Password is Invalid");
