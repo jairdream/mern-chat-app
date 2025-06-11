@@ -7,6 +7,8 @@ const User = require("../models/userModel");
 //@access          Protected
 const accessChannel = asyncHandler(async (req, res) => {
   const { userId } = req.body;
+
+  console.log(userId);
   
   if (!userId) {
     console.log("UserId param not sent with request");
@@ -20,7 +22,7 @@ const accessChannel = asyncHandler(async (req, res) => {
       { users: { $elemMatch: { $eq: userId } } },
     ],
   })
-    .populate("users", "-password")
+    .populate("users", "name pic email")
     .populate("latestMessage");
 
   isChannel = await User.populate(isChannel, {
@@ -41,8 +43,9 @@ const accessChannel = asyncHandler(async (req, res) => {
       const createdChannel = await Channel.create(channelData);
       const FullChannel = await Channel.findOne({ _id: createdChannel._id }).populate(
         "users",
-        "-password"
+        "name pic email"
       );
+      console.log(FullChannel);
       res.status(200).json(FullChannel);
     } catch (error) {
       res.status(400);
@@ -57,7 +60,7 @@ const accessChannel = asyncHandler(async (req, res) => {
 const fetchChannels = asyncHandler(async (req, res) => {
   try {
     Channel.find({ users: { $elemMatch: { $eq: req.user._id } } })
-      .populate("users", "-password")
+      .populate("users", "name pic email")
       .populate("latestMessage")
       .sort({ updatedAt: -1 })
       .then(async (results) => {
@@ -77,6 +80,7 @@ const fetchChannels = asyncHandler(async (req, res) => {
 //@route           POST /api/channel/togglepin/{channelId}
 //@access          Protected
 const togglePin = asyncHandler(async (req, res) => {
+
   try {
     // Find the channel by ID
     const channel = await Channel.findById(req.params.channelId);
@@ -86,14 +90,35 @@ const togglePin = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: 'Channel not found' });
     }
 
+    if (channel.isProductChannel) {
+      res.status(400);
+      throw new Error("Product channel cannot be unpinned.");
+    }
+
     // Toggle the isPinned status
-    channel.isPinned = !channel.isPinned;
+    const pinnedSet = new Set(
+      channel.pinnedUsers.map(id => id.toString())
+    );
+
+    if (pinnedSet.has(req.user._id.toString())) {
+      pinnedSet.delete(req.user._id.toString());
+    } else {
+      pinnedSet.add(req.user._id.toString());
+    }
+
+    channel.pinnedUsers = Array.from(pinnedSet);
 
     // Save the updated channel
     await channel.save();
 
     // Return the updated channel
-    res.json(channel);
+    res.json({
+      _id: channel._id,
+      isProductChannel: channel.isProductChannel,
+      pinnedUsers: channel.pinnedUsers,
+      users: channel.users,
+      latestMessage: channel.latestMessage
+    });
   } catch (error) {
     res.status(400);
     throw new Error(error.message);

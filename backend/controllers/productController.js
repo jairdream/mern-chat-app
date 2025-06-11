@@ -5,10 +5,10 @@ const Product = require("../models/productModel");
 // @route   POST /api/product
 // @access  Public
 const createProduct = async (req, res) => {
-  const { name, content, files } = req.body;
+  const { name, price, content, files } = req.body;
 
   // Validation
-  if (!name || !content) {
+  if (!name || !price) {
     console.log("Invalid data passed into request");
     return res.status(400).json({ error: 'Name and content are required fields' });
   }
@@ -18,7 +18,7 @@ const createProduct = async (req, res) => {
   }
 
   try {
-    const newProduct = new Product({ name, content, files });
+    const newProduct = new Product({ name, price, content, files });
     const savedProduct = await newProduct.save();
     res.status(201).json(savedProduct);
   } catch (error) {
@@ -59,9 +59,9 @@ const getProductById = async (req, res) => {
 // @route   PUT /api/product/:id
 // @access  Public
 const updateProduct = asyncHandler( async (req, res) => {
-  const { name, content, files } = req.body;
+  const { name, price, content, files } = req.body;
 
-  if (!name || !content) {
+  if (!name || !price) {
     console.log("Name and content are required fields");
     return res.status(400).json({ error: 'Name and content are required fields' });
   }
@@ -71,7 +71,7 @@ const updateProduct = asyncHandler( async (req, res) => {
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      { name, content, files: filesArray },
+      { name, price, content, files: filesArray },
       { new: true, runValidators: true }
     ).populate('files', "name path size type");
     

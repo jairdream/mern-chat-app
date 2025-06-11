@@ -21,7 +21,7 @@ const addHistory = asyncHandler(async (req, res) => {
         amount: amount,
       }
     )
-    history = await history.populate("user", "-password -refreshToken").execPopulate();
+    history = await history.populate("user", "name pic email").execPopulate();
     res.json(history);
   } catch(error) {
     res.status(400);
@@ -42,7 +42,8 @@ const allHistories = asyncHandler(async (req, res) => {
   try {
     // Update messages excluding those sent by current user
     const histories = await History.find({ user: userId })
-      .populate("user", "--password");
+      .populate("user", "name pic email")
+      .populate("product", "name price");
     console.log(histories);
     res.json(histories);
   } catch(error) {

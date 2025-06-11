@@ -20,7 +20,7 @@ const accessChat = asyncHandler(async (req, res) => {
       { users: { $elemMatch: { $eq: userId } } },
     ],
   })
-    .populate("users", "-password")
+    .populate("users", "name pic email")
     .populate("latestMessage");
 
   isChat = await User.populate(isChat, {
@@ -41,7 +41,7 @@ const accessChat = asyncHandler(async (req, res) => {
       const createdChat = await Chat.create(chatData);
       const FullChat = await Chat.findOne({ _id: createdChat._id }).populate(
         "users",
-        "-password"
+        "name pic email"
       );
       res.status(200).json(FullChat);
     } catch (error) {
@@ -57,8 +57,8 @@ const accessChat = asyncHandler(async (req, res) => {
 const fetchChats = asyncHandler(async (req, res) => {
   try {
     Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
-      .populate("users", "-password")
-      .populate("groupAdmin", "-password")
+      .populate("users", "name pic email")
+      .populate("groupAdmin", "name pic email")
       .populate("latestMessage")
       .sort({ updatedAt: -1 })
       .then(async (results) => {
@@ -101,8 +101,8 @@ const createGroupChat = asyncHandler(async (req, res) => {
     });
 
     const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
-      .populate("users", "-password")
-      .populate("groupAdmin", "-password");
+      .populate("users", "name pic email")
+      .populate("groupAdmin", "name pic email");
 
     res.status(200).json(fullGroupChat);
   } catch (error) {
@@ -126,8 +126,8 @@ const renameGroup = asyncHandler(async (req, res) => {
       new: true,
     }
   )
-    .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    .populate("users", "name pic email")
+    .populate("groupAdmin", "name pic email");
 
   if (!updatedChat) {
     res.status(404);
@@ -154,8 +154,8 @@ const removeFromGroup = asyncHandler(async (req, res) => {
       new: true,
     }
   )
-    .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    .populate("users", "name pic email")
+    .populate("groupAdmin", "name pic email");
 
   if (!removed) {
     res.status(404);
@@ -182,8 +182,8 @@ const addToGroup = asyncHandler(async (req, res) => {
       new: true,
     }
   )
-    .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    .populate("users", "name pic email")
+    .populate("groupAdmin", "name pic email");
 
   if (!added) {
     res.status(404);
