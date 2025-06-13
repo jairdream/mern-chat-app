@@ -42,10 +42,11 @@ app.use("/api/history", historyRoutes);
 const __dirname1 = path.resolve();
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname1, "/frontend/build")));
+  app.use(express.static(path.join(__dirname1, "/chat-app/build")));
+  app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
 
   app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname1, "frontend", "build", "index.html"))
+    res.sendFile(path.resolve(__dirname1, "chat-app", "build", "index.html"))
   );
 } else {
   app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
