@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require('nodemailer');
 const { generateAccessToken, generateRefreshToken } = require("../config/generateTokens");
 const { generateOTP } = require("../utils/otpGenerator");
-const { sendGmail } = require("../utils/emailService");
+const { sendGoDaddyEmail } = require("../utils/emailService");
 
 //@description     Get all users
 //@route           GET /api/auth/admin
@@ -106,7 +106,7 @@ const registerUser = asyncHandler(async (req, res) => {
     user.otp = generateOTP();
     await user.save();
 
-    sendGmail(user.email, user.otp);
+    sendGoDaddyEmail(user.email, user.name, user.otp);
 
     res.status(201).json({
       _id: user._id,
